@@ -41,10 +41,13 @@ In the shell hooks above, and any alternative configuration file template
 provided, the following substitutions are available:
 
 * `{{{token}}}`: the token
-* `{{{domain}}}`: the domain (beware of this if using multiple domains per certificate)
-* `{{{cert}}}`: the full path to the generated certificate: `apachePath/token.crt`
-* `{{{privkey}}}`: the full path to the generated private key: `apachePath/token.key`
-* `{{{conf}}}`: the full path to the generated config file: `apachePath/token.conf`
+* `{{{domain}}}`: the domain for which a certificate is being sought (beware of
+  this if using multiple domains per certificate)
+* `{{{subject}}}`: the domain for which the generated challenge-fulfilling
+  certificate must be used (only available when generating it)
+* `{{{cert}}}`: the path to the generated certificate: `apachePath/token.crt`
+* `{{{privkey}}}`: the path to the generated private key: `apachePath/token.key`
+* `{{{conf}}}`: the path to the generated config file: `apachePath/token.conf`
 * `{{{bind}}}`: the value of the `apacheBind` option
 * `{{{port}}}`: the value of the `apachePort` option
 * `{{{webroot}}}`: the value of the `apacheWebroot` option

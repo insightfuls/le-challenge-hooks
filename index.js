@@ -37,7 +37,7 @@ Challenge.create = function (options) {
   results.create = undefined;
 
   Object.keys(defaults).forEach(function (key) {
-    if ('undefined' === typeof options[key]) {
+    if ('undefined' === typeof options[key] || options[key] === null) {
       options[key] = defaults[key];
     }
   });

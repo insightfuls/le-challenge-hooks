@@ -1,6 +1,6 @@
 {
   "name": "le-challenge-apache",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A strategy for node-letsencrypt that adds sites to an Apache web server to satisfy tls-sni-01 or tls-sni-02 challenges.",
   "main": "index.js",
   "scripts": {

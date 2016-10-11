@@ -1,3 +1,4 @@
+# vim: set ft=apache :
 <VirtualHost {{{bind}}}:{{{port}}}>
 	ServerName {{{subject}}}
 

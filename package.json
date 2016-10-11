@@ -1,19 +1,20 @@
 {
-  "name": "le-challenge-apache",
-  "version": "2.0.2",
-  "description": "A strategy for node-letsencrypt that adds sites to an Apache web server to satisfy tls-sni-01 or tls-sni-02 challenges.",
+  "name": "le-challenge-hooks",
+  "version": "2.0.0",
+  "description": "A strategy for node-letsencrypt that uses hooks to configure a webserver to meet tls-sni-01 or tls-sni-02 challenges.",
   "main": "index.js",
   "scripts": {
     "test": "node test.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/insightfuls/le-challenge-apache.git"
+    "url": "git+https://github.com/insightfuls/le-challenge-hooks.git"
   },
   "keywords": [
     "le-challenge",
     "le-challenge-",
     "apache",
+    "hooks",
     "sni",
     "tls-sni-01",
     "tls-sni-02",
@@ -24,9 +25,9 @@
   "author": "Ben Schmidt",
   "license": "(MIT OR Apache-2.0)",
   "bugs": {
-    "url": "https://github.com/insightfuls/le-challenge-apache/issues"
+    "url": "https://github.com/insightfuls/le-challenge-hooks/issues"
   },
-  "homepage": "https://github.com/insightfuls/le-challenge-apache#readme",
+  "homepage": "https://github.com/insightfuls/le-challenge-hooks#readme",
   "dependencies": {
     "bluebird": "^3.4.6",
     "le-tls-sni": "^0.1.1",

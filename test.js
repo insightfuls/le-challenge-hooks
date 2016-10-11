@@ -3,24 +3,27 @@
 var fs = require('fs');
 var path = require('path');
 
+var falsePath;
+if (fs.existsSync("/bin/false")) {
+	falsePath = "/bin/false";
+} else if (fs.existsSync("/usr/bin/false")) {
+	falsePath = "/usr/bin/false";
+} else {
+	throw new Error("can't find 'false' program");
+}
+
 var challenge = require('./').create({
-  apachePath: "/tmp/le-challenge-apache-test"
-, apacheBind: "*"
-, apachePort: 443
-, apacheWebroot: "/tmp"
-, apacheEnable: "touch /tmp/le-challenge-apache-test/enabled"
-, apacheCheck: "touch /tmp/le-challenge-apache-test/checked"
-, apacheReload: "touch /tmp/le-challenge-apache-test/reloaded"
-, apacheDisable: "touch /tmp/le-challenge-apache-test/disabled"
+  hooksPath: "/tmp/le-challenge-hooks-test"
 , debug: true
 });
 
 var domain = 'example.com';
 var token = 'token-id';
 var key = 'secret-key';
-var confExpected = fs.readFileSync(path.join(__dirname, 'httpd.conf.expected'), 'utf8');
+var confExpected = fs.readFileSync(path.join(__dirname, 'servers', 'test.expected'), 'utf8');
 
 var opts = challenge.getOptions();
+opts.hooksServer = "test";
 opts.challengeType = "tls-sni-01";
 
 function tryUnlink(path) {
@@ -30,13 +33,13 @@ function tryUnlink(path) {
   }
 }
 
-if (fs.existsSync("/tmp/le-challenge-apache-test/token-id.crt")) {
+if (fs.existsSync("/tmp/le-challenge-hooks-test/token-id.crt")) {
   throw new Error("cert already exists");
 }
-if (fs.existsSync("/tmp/le-challenge-apache-test/token-id.key")) {
+if (fs.existsSync("/tmp/le-challenge-hooks-test/token-id.key")) {
   throw new Error("key already exists");
 }
-if (fs.existsSync("/tmp/le-challenge-apache-test/token-id.conf")) {
+if (fs.existsSync("/tmp/le-challenge-hooks-test/token-id.conf")) {
   throw new Error("conf already exists");
 }
 challenge.set(opts, domain, token, key, function (err) {
@@ -45,28 +48,32 @@ challenge.set(opts, domain, token, key, function (err) {
     throw err;
   }
 
-  if (!fs.existsSync("/tmp/le-challenge-apache-test/token-id.crt")) {
+  if (!fs.existsSync("/tmp/le-challenge-hooks-test/token-id.crt")) {
     throw new Error("cert not written");
   }
-  if (!fs.existsSync("/tmp/le-challenge-apache-test/token-id.key")) {
+  if (!fs.existsSync("/tmp/le-challenge-hooks-test/token-id.key")) {
     throw new Error("key not written");
   }
-  var conf = fs.readFileSync("/tmp/le-challenge-apache-test/token-id.conf", 'utf8');
+  var conf = fs.readFileSync("/tmp/le-challenge-hooks-test/token-id.conf", 'utf8');
   if (conf !== confExpected) {
     throw new Error("incorrect configuration");
   }
-  if (!fs.existsSync("/tmp/le-challenge-apache-test/enabled")) {
-    throw new Error("site not enabled");
+  if (!fs.existsSync("/tmp/le-challenge-hooks-test/pre")) {
+    throw new Error("conf not pre-checked");
   }
-  if (!fs.existsSync("/tmp/le-challenge-apache-test/checked")) {
+  if (!fs.existsSync("/tmp/le-challenge-hooks-test/enabled")) {
+    throw new Error("conf not enabled");
+  }
+  if (!fs.existsSync("/tmp/le-challenge-hooks-test/checked")) {
     throw new error("conf not checked");
   }
-  if (!fs.existsSync("/tmp/le-challenge-apache-test/reloaded")) {
-    throw new error("apache not reloaded");
+  if (!fs.existsSync("/tmp/le-challenge-hooks-test/reloaded")) {
+    throw new error("webserver not reloaded");
   }
-  tryUnlink("/tmp/le-challenge-apache-test/enabled");
-  tryUnlink("/tmp/le-challenge-apache-test/checked");
-  tryUnlink("/tmp/le-challenge-apache-test/reloaded");
+  tryUnlink("/tmp/le-challenge-hooks-test/pre");
+  tryUnlink("/tmp/le-challenge-hooks-test/enabled");
+  tryUnlink("/tmp/le-challenge-hooks-test/checked");
+  tryUnlink("/tmp/le-challenge-hooks-test/reloaded");
 
   challenge.remove(opts, domain, token, function (err) {
     // if there's an error, there's a problem
@@ -74,60 +81,40 @@ challenge.set(opts, domain, token, key, function (err) {
       throw err;
     }
 
-    if (fs.existsSync("/tmp/le-challenge-apache-test/token-id.crt")) {
+    if (fs.existsSync("/tmp/le-challenge-hooks-test/token-id.crt")) {
       throw new Error("cert not removed");
     }
-    if (fs.existsSync("/tmp/le-challenge-apache-test/token-id.key")) {
+    if (fs.existsSync("/tmp/le-challenge-hooks-test/token-id.key")) {
       throw new Error("key not removed");
     }
-    if (fs.existsSync("/tmp/le-challenge-apache-test/token-id.conf")) {
+    if (fs.existsSync("/tmp/le-challenge-hooks-test/token-id.conf")) {
       throw new Error("conf not removed");
     }
-    if (!fs.existsSync("/tmp/le-challenge-apache-test/disabled")) {
-      throw new Error("site not disabled");
+    if (!fs.existsSync("/tmp/le-challenge-hooks-test/disabled")) {
+      throw new Error("conf not disabled");
     }
-    if (!fs.existsSync("/tmp/le-challenge-apache-test/checked")) {
+    if (!fs.existsSync("/tmp/le-challenge-hooks-test/checked")) {
       throw new Error("conf not checked");
     }
-    if (!fs.existsSync("/tmp/le-challenge-apache-test/reloaded")) {
-      throw new Error("apache not reloaded");
+    if (!fs.existsSync("/tmp/le-challenge-hooks-test/reloaded")) {
+      throw new Error("webserver not reloaded");
     }
-    tryUnlink("/tmp/le-challenge-apache-test/disabled");
-    tryUnlink("/tmp/le-challenge-apache-test/checked");
-    tryUnlink("/tmp/le-challenge-apache-test/reloaded");
+    tryUnlink("/tmp/le-challenge-hooks-test/disabled");
+    tryUnlink("/tmp/le-challenge-hooks-test/checked");
+    tryUnlink("/tmp/le-challenge-hooks-test/reloaded");
 
-    opts.apacheEnable = "/usr/bin/true";
-    opts.apacheCheck = "/usr/bin/true";
-    opts.apacheReload = "/usr/bin/true";
-    opts.apacheDisable = "/usr/bin/true";
+    delete opts.hooksServer;
+    opts.hooksTemplate = path.join(__dirname, "servers", "test");
 
-    var template = opts.apacheTemplate;
-    opts.apacheTemplate = path.join(__dirname, "httpd.conf.alternative");
-    challenge.set(opts, domain, token, key, function (err) {
-      // if there's an error, there's a problem
-      if (err) {
-        throw err;
-      }
-
-      var conf = fs.readFileSync("/tmp/le-challenge-apache-test/token-id.conf", 'utf8');
-      if (conf !== "alternative\n") {
-        throw new Error("incorrect configuration");
-      }
-
-      opts.apacheTemplate = template;
-
-      tryUnlink("/tmp/le-challenge-apache-test/token-id.crt");
-      tryUnlink("/tmp/le-challenge-apache-test/token-id.key");
-      tryUnlink("/tmp/le-challenge-apache-test/token-id.conf");
-
-      var next = makeRemoveFailureTest("apacheReload");
-      var next = makeRemoveFailureTest("apacheCheck", next);
-      var next = makeRemoveFailureTest("apacheDisable", next);
-      var next = makeSetFailureTest("apacheReload", next);
-      var next = makeSetFailureTest("apacheCheck", next);
-      var next = makeSetFailureTest("apacheEnable", next);
-      next();
-    });
+	 var next;
+    next = makeRemoveFailureTest("hooksReload");
+    next = makeRemoveFailureTest("hooksPreReload", next);
+    next = makeRemoveFailureTest("hooksDisable", next);
+    next = makeSetFailureTest("hooksReload", next);
+    next = makeSetFailureTest("hooksPreReload", next);
+    next = makeSetFailureTest("hooksEnable", next);
+    next = makeSetFailureTest("hooksPreEnable", next);
+    next();
   });
 });
 
@@ -139,25 +126,22 @@ function makeRemoveFailureTest(failurePoint, next) {
         throw err;
       }
 
-      opts[failurePoint] = "/usr/bin/false";
+      opts[failurePoint] = falsePath;
       challenge.remove(opts, domain, token, function (err) {
         // if there's no error, there's a problem!
         if (!err) {
           throw new Error("remove didn't fail as expected");
         }
 
-        tryUnlink("/tmp/le-challenge-apache-test/enabled");
-        tryUnlink("/tmp/le-challenge-apache-test/checked");
-        tryUnlink("/tmp/le-challenge-apache-test/reloaded");
-        tryUnlink("/tmp/le-challenge-apache-test/disabled");
-        tryUnlink("/tmp/le-challenge-apache-test/token-id.crt");
-        tryUnlink("/tmp/le-challenge-apache-test/token-id.key");
-        tryUnlink("/tmp/le-challenge-apache-test/token-id.conf");
+        tryUnlink("/tmp/le-challenge-hooks-test/token-id.crt");
+        tryUnlink("/tmp/le-challenge-hooks-test/token-id.key");
+        tryUnlink("/tmp/le-challenge-hooks-test/token-id.conf");
 
-        opts[failurePoint] = "/usr/bin/true";
+        delete opts[failurePoint];
         if (next) {
           next();
         } else {
+          fs.rmdirSync("/tmp/le-challenge-hooks-test");
           console.info('PASS');
         }
       });
@@ -166,21 +150,18 @@ function makeRemoveFailureTest(failurePoint, next) {
 }
 function makeSetFailureTest(failurePoint, next) {
   return function() {
-    opts[failurePoint] = "/usr/bin/false";
+    opts[failurePoint] = falsePath;
     challenge.set(opts, domain, token, key, function (err) {
       // if there's no error, there's a problem!
       if (!err) {
         throw new Error("remove didn't fail as expected");
       }
 
-      tryUnlink("/tmp/le-challenge-apache-test/enabled");
-      tryUnlink("/tmp/le-challenge-apache-test/checked");
-      tryUnlink("/tmp/le-challenge-apache-test/reloaded");
-      tryUnlink("/tmp/le-challenge-apache-test/token-id.crt");
-      tryUnlink("/tmp/le-challenge-apache-test/token-id.key");
-      tryUnlink("/tmp/le-challenge-apache-test/token-id.conf");
+      tryUnlink("/tmp/le-challenge-hooks-test/token-id.crt");
+      tryUnlink("/tmp/le-challenge-hooks-test/token-id.key");
+      tryUnlink("/tmp/le-challenge-hooks-test/token-id.conf");
 
-      opts[failurePoint] = "/usr/bin/true";
+      delete opts[failurePoint];
       next();
     });
   };
